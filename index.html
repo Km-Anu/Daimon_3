@@ -1,26 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Voiceflow Chat</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    /* Optional: ensure the widget has room; the widget is overlayed within this page */
+    #vf-fullpage { height: 100vh; }
+  </style>
 </head>
 <body>
+  <div id="vf-fullpage"></div>
   <script type="text/javascript">
     (function(d, t) {
-        var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
-        v.onload = function() {
-          window.voiceflow.chat.load({
-            verify: { projectID: '68c466a58969e6e99916e4f3' },
-            url: 'https://general-runtime.voiceflow.com',
-            versionID: 'production',
-            voice: {
-              url: "https://runtime-api.voiceflow.com"
-            }
-          });
-        }
-        v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; 
-        v.type = "text/javascript"; 
-        s.parentNode.insertBefore(v, s);
+      var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
+      v.onload = function() {
+        // Load the widget
+        const load = window.voiceflow && window.voiceflow.chat && window.voiceflow.chat.load;
+        if (!load) return console.error('Voiceflow widget failed to load');
+
+        // NOTE: we disable the launcher and programmatically open the chat panel
+        load({
+          verify: { projectID: '68c466a58969e6e99916e4f3' },
+          url: 'https://general-runtime.voiceflow.com',
+          versionID: 'production',
+          voice: { url: 'https://runtime-api.voiceflow.com' },
+
+          // Try one of these “hide the bubble” flags depending on your widget build:
+          // (Voiceflow has had a couple of config shapes across versions.)
+          launcher: false,          // <-- works on many builds
+          // OR:
+          // launch: { enabled: false }, // <-- alternative on some builds
+
+          // (Optional) pass a container so it anchors within the page’s viewport
+          container: document.getElementById('vf-fullpage'),
+        }).then(function(api) {
+          // Open immediately so it behaves like a full window
+          if (api && typeof api.open === 'function') api.open();
+          else if (window.voiceflow && window.voiceflow.chat && typeof window.voiceflow.chat.open === 'function') {
+            window.voiceflow.chat.open();
+          }
+        });
+      };
+      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
+      v.type = "text/javascript";
+      s.parentNode.insertBefore(v, s);
     })(document, 'script');
   </script>
 </body>
