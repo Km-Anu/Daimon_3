@@ -5,46 +5,54 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Chat</title>
   <style>
-    html, body { height: 100%; margin: 0; }
-    /* Optional: ensure the widget has room; the widget is overlayed within this page */
-    #vf-fullpage { height: 100vh; }
+    html, body { height:100%; margin:0; }
+    /* Optional backdrop so the tab isn't blank behind the panel */
+    body { background:#0b0f13; }
+    /* If Voiceflow honors container, this gives it full-height real estate */
+    #vf-fullpage { height:100vh; }
   </style>
 </head>
 <body>
   <div id="vf-fullpage"></div>
+
   <script type="text/javascript">
     (function(d, t) {
       var v = d.createElement(t), s = d.getElementsByTagName(t)[0];
       v.onload = function() {
-        // Load the widget
-        const load = window.voiceflow && window.voiceflow.chat && window.voiceflow.chat.load;
-        if (!load) return console.error('Voiceflow widget failed to load');
+        var loader = window.voiceflow && window.voiceflow.chat && window.voiceflow.chat.load;
+        if (!loader) return console.error('Voiceflow loader missing');
 
-        // NOTE: we disable the launcher and programmatically open the chat panel
-        load({
+        // Load the widget
+        loader({
           verify: { projectID: '68c466a58969e6e99916e4f3' },
           url: 'https://general-runtime.voiceflow.com',
           versionID: 'production',
           voice: { url: 'https://runtime-api.voiceflow.com' },
 
-          // Try one of these “hide the bubble” flags depending on your widget build:
-          // (Voiceflow has had a couple of config shapes across versions.)
-          launcher: false,          // <-- works on many builds
-          // OR:
-          // launch: { enabled: false }, // <-- alternative on some builds
+          // Hide the floating bubble; we’ll open the panel programmatically.
+          // (Some builds use `launcher:false`; others use `launch:{enabled:false}`.)
+          launcher: false,
+          // launch: { enabled: false },
 
-          // (Optional) pass a container so it anchors within the page’s viewport
-          container: document.getElementById('vf-fullpage'),
+          // If supported, anchor to a full-height container
+          container: document.getElementById('vf-fullpage')
         }).then(function(api) {
-          // Open immediately so it behaves like a full window
-          if (api && typeof api.open === 'function') api.open();
-          else if (window.voiceflow && window.voiceflow.chat && typeof window.voiceflow.chat.open === 'function') {
-            window.voiceflow.chat.open();
+          // Prefer the returned API, fall back to global
+          function tryOpen() {
+            if (api && typeof api.open === 'function') return api.open();
+            if (window.voiceflow && window.voiceflow.chat && typeof window.voiceflow.chat.open === 'function')
+              return window.voiceflow.chat.open();
           }
+
+          // Open immediately; also retry briefly in case assets are still settling
+          tryOpen();
+          var tries = 0, iv = setInterval(function() {
+            if (++tries > 10 || tryOpen()) clearInterval(iv);
+          }, 300);
         });
       };
-      v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs";
-      v.type = "text/javascript";
+      v.src  = 'https://cdn.voiceflow.com/widget-next/bundle.mjs';
+      v.type = 'text/javascript';
       s.parentNode.insertBefore(v, s);
     })(document, 'script');
   </script>
